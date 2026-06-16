@@ -30,7 +30,15 @@ jobs:
           mv kubectl $HOME/.local/bin/
           echo "$HOME/.local/bin" >> $GITHUB_PATH
       
-      # Запуск Minikube (БЕЗ SUDO)
+      # ✅ Удаляем существующий кластер
+      - name: Delete existing cluster
+        run: |
+          minikube delete || true
+          # Очищаем кэш
+          rm -rf ~/.minikube
+          rm -rf ~/.kube
+      
+      # Запуск Minikube с нужной версией
       - name: Start Minikube
         run: |
           minikube start --driver=docker --cpus=2 --memory=4096 --kubernetes-version=v1.28.0
