@@ -1,4 +1,4 @@
-name: KinD Cluster with Docker
+name: KinD Cluster Setup
 
 on:
   push:
@@ -6,27 +6,38 @@ on:
       - main
 
 jobs:
-  kind-setup:
+  setup-kind:
     runs-on: [my_runner]
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
       
-      - name: Setup KinD
+      # Установка KinD в локальную директорию (без sudo)
+      - name: Install KinD
         run: |
-          # Установка KinD
-          curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
-          chmod +x ./kind
-          sudo mv ./kind /usr/local/bin/kind
-          
-          # Установка kubectl
+          mkdir -p $HOME/.local/bin
+          curl -Lo $HOME/.local/bin/kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+          chmod +x $HOME/.local/bin/kind
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      
+      # Установка kubectl (без sudo)
+      - name: Install kubectl
+        run: |
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x ./kubectl
-          sudo mv ./kubectl /usr/local/bin/kubectl
-          
-          # Создание кластера
-          kind create cluster --name my-cluster
-          
-          # Проверка
+          chmod +x kubectl
+          mkdir -p $HOME/.local/bin
+          mv kubectl $HOME/.local/bin/
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      
+      # Создание кластера (без sudo)
+      - name: Create KinD cluster
+        run: |
+          kind create cluster --name kind-cluster --wait 5m
+      
+      # Проверка
+      - name: Verify cluster
+        run: |
           kubectl cluster-info
           kubectl get nodes
+          kubectl get pods -A
