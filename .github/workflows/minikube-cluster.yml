@@ -6,40 +6,44 @@ on:
       - main
 
 jobs:
-  setup-minikube:
+  minikube:
     runs-on: [my_runner]
     
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
       
-      # Установка Minikube
+      # Установка Minikube (БЕЗ SUDO)
       - name: Install Minikube
         run: |
-          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-          sudo install minikube-linux-amd64 /usr/local/bin/minikube
-          rm minikube-linux-amd64
+          mkdir -p $HOME/.local/bin
+          curl -Lo $HOME/.local/bin/minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          chmod +x $HOME/.local/bin/minikube
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
       
-      # Установка kubectl
+      # Установка kubectl (БЕЗ SUDO)
       - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: 'latest'
+        run: |
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          mkdir -p $HOME/.local/bin
+          mv kubectl $HOME/.local/bin/
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
       
-      # Запуск Minikube кластера
+      # Запуск Minikube (БЕЗ SUDO)
       - name: Start Minikube
         run: |
-          minikube start --driver=docker --kubernetes-version=v1.28.0
+          minikube start --driver=docker --cpus=2 --memory=4096 --kubernetes-version=v1.28.0
           minikube status
       
-      # Проверка кластера
+      # Проверка
       - name: Verify cluster
         run: |
           kubectl cluster-info
           kubectl get nodes
           kubectl get pods -A
       
-      # Остановка кластера (опционально)
+      # Остановка (очистка)
       - name: Stop Minikube
         if: always()
         run: minikube stop
