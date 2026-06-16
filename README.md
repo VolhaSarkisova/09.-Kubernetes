@@ -1,0 +1,2 @@
+cd ~/
+./runner.sh
