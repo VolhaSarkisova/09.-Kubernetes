@@ -13,7 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      # Установка KinD в локальную директорию (без sudo)
       - name: Install KinD
         run: |
           mkdir -p $HOME/.local/bin
@@ -21,7 +20,6 @@ jobs:
           chmod +x $HOME/.local/bin/kind
           echo "$HOME/.local/bin" >> $GITHUB_PATH
       
-      # Установка kubectl (без sudo)
       - name: Install kubectl
         run: |
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
@@ -30,12 +28,15 @@ jobs:
           mv kubectl $HOME/.local/bin/
           echo "$HOME/.local/bin" >> $GITHUB_PATH
       
-      # Создание кластера (без sudo)
+      # ✅ Удаляем существующий кластер если есть
+      - name: Delete existing cluster (if any)
+        run: |
+          kind delete cluster --name kind-cluster || true
+      
       - name: Create KinD cluster
         run: |
           kind create cluster --name kind-cluster --wait 5m
       
-      # Проверка
       - name: Verify cluster
         run: |
           kubectl cluster-info
