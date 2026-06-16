@@ -1,0 +1,45 @@
+name: Minikube Cluster Setup
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup-minikube:
+    runs-on: [my_runner]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # Установка Minikube
+      - name: Install Minikube
+        run: |
+          curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+          sudo install minikube-linux-amd64 /usr/local/bin/minikube
+          rm minikube-linux-amd64
+      
+      # Установка kubectl
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: 'latest'
+      
+      # Запуск Minikube кластера
+      - name: Start Minikube
+        run: |
+          minikube start --driver=docker --kubernetes-version=v1.28.0
+          minikube status
+      
+      # Проверка кластера
+      - name: Verify cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+          kubectl get pods -A
+      
+      # Остановка кластера (опционально)
+      - name: Stop Minikube
+        if: always()
+        run: minikube stop
